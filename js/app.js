@@ -90,17 +90,17 @@
   }
 
   // Các tab: id = data-view, section tương ứng là #view-<id>.
-  var VIEWS = ['browse', 'topics', 'flash', 'context', 'backup'];
+  var VIEWS = ['browse', 'topics', 'notebook', 'flash', 'context'];
 
   function showView(v) {
     Array.prototype.forEach.call(els.tabs.children, function (x) {
       x.setAttribute('aria-pressed', x.dataset.view === v ? 'true' : 'false');
     });
     VIEWS.forEach(function (id) { document.getElementById('view-' + id).hidden = id !== v; });
-    window.HSKBackup.updateBanner();
-    if (v === 'flash') window.HSKFlash.show();
+    if (v !== 'notebook') window.HSKNotebook.hide();
+    if (v === 'notebook') window.HSKNotebook.show();
+    else if (v === 'flash') window.HSKFlash.show();
     else if (v === 'context') window.HSKContext.show();
-    else if (v === 'backup') window.HSKBackup.show();
     else if (v === 'topics') window.HSKTopicView.show();
     else applyFilters();
   }
@@ -129,6 +129,7 @@
   window.HSKApp = { showView: showView };
 
   initTheme();
+  window.HSKAccount.init();
   buildLevelChips();
   buildKnownChips();
   initTabs();

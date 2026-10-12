@@ -172,7 +172,7 @@
         card.appendChild(el('div', 'fc-hanzi', w.hanzi));
       } else {
         card.appendChild(el('div', 'fc-vi', c.vi || '(chưa có nghĩa)'));
-        card.appendChild(el('div', 'muted', 'HSK ' + w.level + (w.pos ? ' · ' + w.pos : '')));
+        card.appendChild(el('div', 'muted', 'HSK ' + w.level + (w.pos ? ' · ' + window.HSKPos.name(w.pos) : '')));
       }
       card.appendChild(el('div', 'muted', 'Chạm hoặc nhấn Space để lật'));
       card.addEventListener('click', flip);
@@ -180,7 +180,7 @@
       card.appendChild(el('div', 'fc-hanzi', w.hanzi));
       card.appendChild(el('div', 'pinyin', w.pinyin));
       card.appendChild(el('div', 'fc-vi', c.vi || ''));
-      card.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + w.pos : '') + (c.hv ? ' · ' + c.hv : '')));
+      card.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + window.HSKPos.name(w.pos) : '') + (c.hv ? ' · ' + c.hv : '')));
       var sp = button('🔊', 'speak', function (e) { e.stopPropagation(); speak(w.hanzi); });
       sp.setAttribute('aria-label', 'Phát âm');
       card.appendChild(sp);

@@ -46,6 +46,7 @@ main, .topbar, .footer { max-width: 860px; margin: 0 auto; padding: 0 16px; }
 
 .topbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding-top: 16px; padding-bottom: 8px; }
 .topbar h1 { margin: 0; font-size: 1.4rem; }
+.logo { font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; letter-spacing: .02em; }
 .icon-btn {
   background: var(--surface); color: var(--text);
   border: 1px solid var(--border); border-radius: 8px;
@@ -154,6 +155,27 @@ main, .topbar, .footer { max-width: 860px; margin: 0 auto; padding: 0 16px; }
 .error { color: var(--accent); margin: 0; }
 .import-result { display: grid; gap: 8px; }
 
+.account-btn { padding: 8px 12px; font-size: .9rem; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dlg {
+  width: min(92vw, 380px); padding: 20px; border: 1px solid var(--border); border-radius: 16px;
+  background: var(--surface); color: var(--text);
+}
+.dlg::backdrop { background: rgba(0, 0, 0, .5); }
+.dlg-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dlg-head h2 { margin: 0; font-size: 1.2rem; }
+.auth-form { display: grid; gap: 10px; margin-bottom: 10px; }
+.auth-form input {
+  padding: 12px 14px; font-size: 1rem; background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+#auth-body > .btn { width: 100%; margin-bottom: 8px; }
+.auth-links { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.nb-btn[aria-pressed="true"] { color: #b7791f; border-color: #b7791f; }
+.note-input {
+  grid-column: 1 / -1; width: 100%; padding: 8px 10px; font-size: .9rem; resize: vertical;
+  background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+}
+.word-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
 .section-title { font-size: 1.2rem; margin: 16px 0 12px; }
 .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .topic-card {

@@ -36,7 +36,7 @@
 
       var mid = el('div');
       mid.appendChild(el('div', 'pinyin', w.pinyin));
-      mid.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + w.pos : '') + (c.hv ? ' · ' + c.hv : '')));
+      mid.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + window.HSKPos.name(w.pos) : '') + (c.hv ? ' · ' + c.hv : '')));
       li.appendChild(mid);
 
       var btn = el('button', 'speak', '🔊');
@@ -45,6 +45,8 @@
       btn.addEventListener('click', function () { speak(w.hanzi); });
       li.appendChild(btn);
 
+      var row = el('div', 'word-actions');
+      li.appendChild(row);
       var known = store.isKnown(w.id);
       var kb = el('button', 'known-btn', known ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc');
       kb.type = 'button';
@@ -56,12 +58,29 @@
         kb.textContent = now ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc';
         kb.setAttribute('aria-pressed', now ? 'true' : 'false');
       });
-      li.appendChild(kb);
+      row.appendChild(kb);
+
+      // Sổ tay cá nhân: cần đăng nhập.
+      var acc = window.HSKAccount;
+      var nb = el('button', 'known-btn nb-btn');
+      function paintNb() {
+        var saved = acc.loggedIn() && acc.has(w.id);
+        nb.textContent = saved ? '★ Đã lưu vào sổ tay' : '☆ Lưu vào sổ tay';
+        nb.setAttribute('aria-pressed', saved ? 'true' : 'false');
+      }
+      paintNb();
+      nb.type = 'button';
+      nb.addEventListener('click', function () {
+        if (!acc.loggedIn()) { window.HSKAuthUI.open(); return; }
+        if (!acc.ready()) return;
+        if (acc.has(w.id)) acc.remove(w.id); else acc.add(w.id);
+        if (opts.onNotebookChange && opts.onNotebookChange()) return;
+        paintNb();
+      });
+      row.appendChild(nb);
 
       if (c.vi) {
-        var vi = el('div', 'vi', c.vi);
-        vi.appendChild(el('span', 'badge', 'AI tạo'));
-        li.appendChild(vi);
+        li.appendChild(el('div', 'vi', c.vi));
       }
       if (c.ex && c.ex.length) {
         var d = el('details', 'examples');
@@ -74,6 +93,16 @@
           d.appendChild(b);
         });
         li.appendChild(d);
+      }
+      if (opts.notes) {
+        var note = el('textarea', 'note-input');
+        note.rows = 2;
+        note.maxLength = 300;
+        note.placeholder = 'Ghi chú của bạn về từ này…';
+        note.setAttribute('aria-label', 'Ghi chú cho ' + w.hanzi);
+        note.value = window.HSKAccount.noteOf(w.id);
+        note.addEventListener('change', function () { window.HSKAccount.setNote(w.id, note.value); });
+        li.appendChild(note);
       }
       return li;
     }

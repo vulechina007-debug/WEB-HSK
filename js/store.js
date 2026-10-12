@@ -24,8 +24,41 @@
     return blank();
   }
 
+  var listeners = [];
+
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+    listeners.forEach(function (fn) { try { fn(); } catch (e) {} });
+  }
+
+  // Đăng ký hàm được gọi mỗi khi tiến độ thay đổi (dùng để đồng bộ lên tài khoản).
+  function onChange(fn) { listeners.push(fn); }
+
+  // Gộp tiến độ lấy từ tài khoản vào dữ liệu hiện tại: thẻ nào cập nhật gần nhất (t) thì thắng.
+  function mergeRemote(remote) {
+    if (!remote || typeof remote !== 'object') return;
+    var rc = remote.cards || {};
+    Object.keys(rc).forEach(function (id) {
+      var r = rc[id], l = data.cards[id];
+      if (!r || typeof r.box !== 'number' || typeof r.due !== 'string') return;
+      if (!l || (r.t || 0) > (l.t || 0)) data.cards[id] = r;
+    });
+    if (remote.settings) {
+      var s = remote.settings;
+      if (Array.isArray(s.levels) && s.levels.length) data.settings.levels = s.levels;
+      if (['mix', 'zh-vi', 'vi-zh'].indexOf(s.mode) !== -1) data.settings.mode = s.mode;
+      if (typeof s.topic === 'string') data.settings.topic = s.topic;
+    }
+    if (remote.daily && remote.daily.date === today() && data.daily.date === today()) {
+      data.daily.newCount = Math.max(data.daily.newCount, remote.daily.newCount | 0);
+    } else if (remote.daily && remote.daily.date === today() && data.daily.date !== today()) {
+      data.daily = { date: remote.daily.date, newCount: remote.daily.newCount | 0 };
+    }
+    save();
+  }
+
+  function snapshot() {
+    return { v: 1, cards: data.cards, daily: data.daily, settings: data.settings };
   }
 
   function dateStr(d) {
@@ -50,6 +83,7 @@
       c.due = today();
       c.known = false;
     }
+    c.t = Date.now();
     data.cards[id] = c;
     save();
   }
@@ -59,6 +93,7 @@
     c.known = known;
     if (known) { c.box = 5; c.due = addDays(INTERVALS[5]); }
     else { c.box = 1; c.due = today(); }
+    c.t = Date.now();
     data.cards[id] = c;
     save();
   }
@@ -76,60 +111,10 @@
   }
   function countNew() { newToday(); data.daily.newCount++; save(); }
 
-  /* ---------- Xuất / nhập ---------- */
-  var BACKUP_DAYS = 14;
-
-  function exportJSON() {
-    data.lastBackup = today();
-    save();
-    return JSON.stringify({ app: 'hsk-learn', v: data.v, exportedAt: new Date().toISOString(), data: data }, null, 1);
-  }
-
-  // Kiểm tra file nhập; trả về { ok, error, data, stats }.
-  function parseImport(text) {
-    var o;
-    try { o = JSON.parse(text); } catch (e) { return { ok: false, error: 'File không phải JSON hợp lệ.' }; }
-    if (!o || o.app !== 'hsk-learn') return { ok: false, error: 'Đây không phải file sao lưu của web này.' };
-    if (o.v !== 1) return { ok: false, error: 'Phiên bản file (' + o.v + ') chưa được hỗ trợ.' };
-    var d = o.data;
-    if (!d || typeof d.cards !== 'object') return { ok: false, error: 'File thiếu dữ liệu thẻ.' };
-    var clean = blank(), n = 0, bad = 0;
-    Object.keys(d.cards).forEach(function (id) {
-      var c = d.cards[id];
-      if (c && typeof c.box === 'number' && c.box >= 1 && c.box <= 5 && typeof c.due === 'string') {
-        clean.cards[id] = { box: c.box, due: c.due, seen: c.seen || c.due, known: c.known === true };
-        n++;
-      } else { bad++; }
-    });
-    if (d.settings && typeof d.settings === 'object') {
-      var s = d.settings;
-      if (Array.isArray(s.levels) && s.levels.length) clean.settings.levels = s.levels.filter(function (x) { return x >= 1 && x <= 6; });
-      if (['mix', 'zh-vi', 'vi-zh'].indexOf(s.mode) !== -1) clean.settings.mode = s.mode;
-      if (typeof s.topic === 'string') clean.settings.topic = s.topic;
-    }
-    if (d.daily && d.daily.date) clean.daily = { date: d.daily.date, newCount: d.daily.newCount | 0 };
-    clean.lastBackup = today();
-    return { ok: true, data: clean, stats: { cards: n, skipped: bad, exportedAt: o.exportedAt || '' } };
-  }
-
-  function applyImport(clean) {
-    data = clean;
-    save();
-  }
-
-  function backupDue() {
-    if (!Object.keys(data.cards).length) return false;
-    if (!data.lastBackup) return true;
-    var days = (new Date(today()) - new Date(data.lastBackup)) / 86400000;
-    return days >= BACKUP_DAYS;
-  }
-
   window.HSKStore = {
-    exportJSON: exportJSON,
-    parseImport: parseImport,
-    applyImport: applyImport,
-    backupDue: backupDue,
-    lastBackup: function () { return data.lastBackup || ''; },
+    onChange: onChange,
+    mergeRemote: mergeRemote,
+    snapshot: snapshot,
     data: function () { return data; },
     save: save,
     today: today,
