@@ -111,6 +111,19 @@
     });
   }
 
+  // Bấm logo: về trang chủ (tab Từ vựng, bỏ hết bộ lọc, cuộn lên đầu).
+  function initHome() {
+    document.getElementById('home-link').addEventListener('click', function (e) {
+      e.preventDefault();
+      state.query = ''; state.level = 'all'; state.known = 'all';
+      els.search.value = '';
+      Array.prototype.forEach.call(els.levels.children, function (c) { c.setAttribute('aria-pressed', c.dataset.level === 'all' ? 'true' : 'false'); });
+      Array.prototype.forEach.call(els.knownFilter.children, function (c) { c.setAttribute('aria-pressed', c.dataset.k === 'all' ? 'true' : 'false'); });
+      showView('browse');
+      window.scrollTo(0, 0);
+    });
+  }
+
   function initTheme() {
     var saved = null;
     try { saved = localStorage.getItem('theme'); } catch (e) {}
@@ -133,5 +146,6 @@
   buildLevelChips();
   buildKnownChips();
   initTabs();
+  initHome();
   applyFilters();
 })();

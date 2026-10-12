@@ -32,18 +32,45 @@
     function renderWord(w) {
       var c = content[w.id] || {};
       var li = el('li', 'word');
-      li.appendChild(el('span', 'hanzi', w.hanzi));
+      var slash = function (s) { return String(s || '').split('|').join(' / '); };
 
-      var mid = el('div');
-      mid.appendChild(el('div', 'pinyin', w.pinyin));
-      mid.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + window.HSKPos.name(w.pos) : '') + (c.hv ? ' · ' + c.hv : '')));
-      li.appendChild(mid);
-
-      var btn = el('button', 'speak', '🔊');
+      // Dòng đầu: chữ Hán (to, đỏ) + dạng phồn thể + nút phát âm.
+      var head = el('div', 'w-head');
+      var title = el('div', 'w-title');
+      title.appendChild(el('span', 'hanzi', slash(w.hanzi)));
+      if (w.traditional && w.traditional !== w.hanzi) title.appendChild(el('span', 'trad', '【' + slash(w.traditional) + '】'));
+      head.appendChild(title);
+      var btn = el('button', 'pill speak-pill', '🔊 Phát âm');
       btn.type = 'button';
       btn.setAttribute('aria-label', 'Phát âm ' + w.hanzi);
-      btn.addEventListener('click', function () { speak(w.hanzi); });
-      li.appendChild(btn);
+      btn.addEventListener('click', function () { speak(String(w.hanzi).split('|')[0]); });
+      head.appendChild(btn);
+      li.appendChild(head);
+
+      // Pinyin và âm Hán-Việt.
+      var sub = el('div', 'w-sub');
+      sub.appendChild(el('span', 'pinyin', '[' + slash(w.pinyin) + ']'));
+      if (c.hv) sub.appendChild(el('span', 'hv', '[' + c.hv.toUpperCase() + ']'));
+      li.appendChild(sub);
+
+      // Loại từ và chủ đề dạng nhãn.
+      var chips = el('div', 'w-chips');
+      String(w.pos || '').split('/').filter(Boolean).forEach(function (p) {
+        chips.appendChild(el('span', 'tag tag-pos', window.HSKPos.name(p)));
+      });
+      (c.t || []).forEach(function (tid) {
+        (window.HSK_TOPICS || []).forEach(function (t) {
+          if (t.id === tid && tid !== 't22') chips.appendChild(el('span', 'tag', t.name));
+        });
+      });
+      if (chips.children.length) li.appendChild(chips);
+
+      var lv = el('div', 'w-level');
+      lv.appendChild(el('span', 'muted', 'Cấp độ:'));
+      lv.appendChild(el('span', 'tag tag-level', 'HSK ' + w.level));
+      li.appendChild(lv);
+
+      if (c.vi) li.appendChild(el('div', 'vi', c.vi));
 
       var row = el('div', 'word-actions');
       li.appendChild(row);
@@ -79,9 +106,6 @@
       });
       row.appendChild(nb);
 
-      if (c.vi) {
-        li.appendChild(el('div', 'vi', c.vi));
-      }
       if (c.ex && c.ex.length) {
         var d = el('details', 'examples');
         d.appendChild(el('summary', null, 'Ví dụ (' + c.ex.length + ')'));

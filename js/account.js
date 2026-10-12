@@ -13,6 +13,7 @@
   var user = null;
   var ready = false;        // đã tải xong dữ liệu từ đám mây của người dùng này
   var notebook = {};        // { wordId: { a: thời điểm thêm, n: ghi chú } }
+  var notes = {};           // { noteId: { t: tiêu đề, c: nội dung, a: tạo lúc, u: sửa lúc } }
   var listeners = [];
   var auth = null, db = null, syncTimer = null, status = '';
 
@@ -47,11 +48,13 @@
     user = u;
     ready = false;
     notebook = {};
+    notes = {};
     notify();
     if (!u) return;
     docRef().get().then(function (snap) {
       var d = snap.exists ? snap.data() : {};
       notebook = d.notebook || {};
+      notes = d.notes || {};
       store.mergeRemote(d.progress);
       ready = true;
       push();
@@ -66,7 +69,7 @@
 
   function push() {
     if (!user || !ready) return;
-    docRef().set({ progress: clean(store.snapshot()), notebook: clean(notebook), updated: Date.now() })
+    docRef().set({ progress: clean(store.snapshot()), notebook: clean(notebook), notes: clean(notes), updated: Date.now() })
       .then(function () { if (status) { status = ''; notify(); } })
       .catch(function () { status = 'Lưu lên tài khoản thất bại, sẽ thử lại lần sau.'; notify(); });
   }
@@ -102,6 +105,34 @@
     return Object.keys(notebook).sort(function (a, b) { return (notebook[b].a || 0) - (notebook[a].a || 0); });
   }
 
+  /* ---------- Ghi chú tự do (sổ tay) ---------- */
+  function noteList() {
+    return Object.keys(notes).map(function (id) { var n = notes[id]; return { id: id, t: n.t || '', c: n.c || '', a: n.a || 0, u: n.u || 0 }; })
+      .sort(function (x, y) { return y.u - x.u; });
+  }
+  function getNote(id) { return notes[id] || null; }
+  function addNote() {
+    if (!user || !ready) return null;
+    var id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var now = Date.now();
+    notes[id] = { t: '', c: '', a: now, u: now };
+    schedulePush();
+    return id;
+  }
+  // Sửa nội dung: không gọi notify() để khỏi vẽ lại trình soạn khi đang gõ.
+  function updateNote(id, t, c) {
+    if (!user || !ready || !notes[id]) return;
+    notes[id].t = String(t || '').slice(0, 120);
+    notes[id].c = String(c || '').slice(0, 20000);
+    notes[id].u = Date.now();
+    schedulePush();
+  }
+  function removeNote(id) {
+    if (!user || !ready || !notes[id]) return;
+    delete notes[id];
+    schedulePush(); notify();
+  }
+
   /* ---------- Đăng nhập / đăng ký ---------- */
   var ERRORS = {
     'auth/invalid-email': 'Email không hợp lệ.',
@@ -135,6 +166,7 @@
     status: function () { return status; },
     has: hasWord, add: addWord, remove: removeWord, setNote: setNote, noteOf: noteOf, ids: ids,
     count: function () { return Object.keys(notebook).length; },
+    notes: noteList, note: getNote, addNote: addNote, updateNote: updateNote, removeNote: removeNote,
     register: register, login: login, google: google, logout: logout, reset: reset, errMsg: errMsg
   };
 })();
