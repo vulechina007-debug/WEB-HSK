@@ -241,6 +241,19 @@ main, .topbar, .footer { max-width: 860px; margin: 0 auto; padding: 0 16px; }
 .word .vi { font-size: 1.1rem; font-weight: 500; padding-top: 10px; border-top: 1px solid var(--border); }
 .word .examples { margin-top: 0; }
 
+.ex-row { display: flex; align-items: center; gap: 8px; }
+.ex-row .ex-zh { flex: 1; }
+.ex-speak {
+  flex-shrink: 0; width: 34px; height: 34px; cursor: pointer; font-size: .95rem;
+  background: var(--accent-soft); color: var(--accent); border: 0; border-radius: 999px;
+}
+.ex-speak:hover { filter: brightness(1.15); }
+.senses-label { font-size: .75rem; color: var(--muted); font-weight: 400; margin-bottom: 2px; }
+.senses { margin: 0; padding-left: 1.3em; font-weight: 500; }
+.senses li { padding: 1px 0; }
+.senses li::marker { color: var(--accent); font-weight: 700; }
+.fc-senses { text-align: left; font-size: 1.2rem; }
+
 /* ---- Sổ tay: ghi chú ---- */
 .note-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
 .note-bar .muted { flex: 1; }

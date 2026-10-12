@@ -27,6 +27,18 @@
     var results = [];
     var page = 1;
 
+    // Nghĩa: từ nhiều nghĩa (ngăn cách bằng ;) hiển thị thành danh sách đánh số.
+    function renderMeaning(vi) {
+      var senses = String(vi).split(/\s*[;；]\s*/).filter(Boolean);
+      if (senses.length < 2) return el('div', 'vi', vi);
+      var box = el('div', 'vi');
+      box.appendChild(el('div', 'senses-label', senses.length + ' nghĩa'));
+      var ol = el('ol', 'senses');
+      senses.forEach(function (s) { ol.appendChild(el('li', null, s)); });
+      box.appendChild(ol);
+      return box;
+    }
+
     function pages() { return Math.max(1, Math.ceil(results.length / PAGE_SIZE)); }
 
     function renderWord(w) {
@@ -53,15 +65,10 @@
       if (c.hv) sub.appendChild(el('span', 'hv', '[' + c.hv.toUpperCase() + ']'));
       li.appendChild(sub);
 
-      // Loại từ và chủ đề dạng nhãn.
+      // Loại từ dạng nhãn.
       var chips = el('div', 'w-chips');
       String(w.pos || '').split('/').filter(Boolean).forEach(function (p) {
         chips.appendChild(el('span', 'tag tag-pos', window.HSKPos.name(p)));
-      });
-      (c.t || []).forEach(function (tid) {
-        (window.HSK_TOPICS || []).forEach(function (t) {
-          if (t.id === tid && tid !== 't22') chips.appendChild(el('span', 'tag', t.name));
-        });
       });
       if (chips.children.length) li.appendChild(chips);
 
@@ -70,7 +77,7 @@
       lv.appendChild(el('span', 'tag tag-level', 'HSK ' + w.level));
       li.appendChild(lv);
 
-      if (c.vi) li.appendChild(el('div', 'vi', c.vi));
+      if (c.vi) li.appendChild(renderMeaning(c.vi));
 
       var row = el('div', 'word-actions');
       li.appendChild(row);
@@ -111,7 +118,10 @@
         d.appendChild(el('summary', null, 'Ví dụ (' + c.ex.length + ')'));
         c.ex.forEach(function (x) {
           var b = el('div', 'fc-ex');
-          b.appendChild(el('div', 'ex-zh', x.zh));
+          var zr = el('div', 'ex-row');
+          zr.appendChild(el('div', 'ex-zh', x.zh));
+          zr.appendChild(window.HSKSpeak.button(x.zh));
+          b.appendChild(zr);
           b.appendChild(el('div', 'ex-py', x.py));
           b.appendChild(el('div', 'ex-vi', x.vi));
           d.appendChild(b);

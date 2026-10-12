@@ -172,6 +172,7 @@
       if (i < parts.length - 1) sent.appendChild(el('mark', o.ok ? 'good' : 'bad', q.x.f));
     });
     card.appendChild(sent);
+    card.appendChild(window.HSKSpeak.button(q.x.zh));
     card.appendChild(el('div', 'ex-py', q.x.py));
     card.appendChild(el('div', 'ex-vi', q.x.vi));
     card.appendChild(el('div', 'meta', q.w.hanzi + ' · ' + q.w.pinyin + ' · ' + (c.vi || '') + (c.hv ? ' · ' + c.hv : '')));

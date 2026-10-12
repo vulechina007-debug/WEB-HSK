@@ -179,14 +179,24 @@
     } else {
       card.appendChild(el('div', 'fc-hanzi', w.hanzi));
       card.appendChild(el('div', 'pinyin', w.pinyin));
-      card.appendChild(el('div', 'fc-vi', c.vi || ''));
+      var senses = String(c.vi || '').split(/\s*[;；]\s*/).filter(Boolean);
+      if (senses.length > 1) {
+        var ol = el('ol', 'senses fc-senses');
+        senses.forEach(function (s) { ol.appendChild(el('li', null, s)); });
+        card.appendChild(ol);
+      } else {
+        card.appendChild(el('div', 'fc-vi', c.vi || ''));
+      }
       card.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + window.HSKPos.name(w.pos) : '') + (c.hv ? ' · ' + c.hv : '')));
       var sp = button('🔊', 'speak', function (e) { e.stopPropagation(); speak(w.hanzi); });
       sp.setAttribute('aria-label', 'Phát âm');
       card.appendChild(sp);
       (c.ex || []).forEach(function (x) {
         var d = el('div', 'fc-ex');
-        d.appendChild(el('div', 'ex-zh', x.zh));
+        var zr = el('div', 'ex-row');
+        zr.appendChild(el('div', 'ex-zh', x.zh));
+        zr.appendChild(window.HSKSpeak.button(x.zh));
+        d.appendChild(zr);
         d.appendChild(el('div', 'ex-py', x.py));
         d.appendChild(el('div', 'ex-vi', x.vi));
         card.appendChild(d);
