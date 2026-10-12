@@ -168,7 +168,8 @@
     var parts = q.x.zh.split(q.x.f);
     parts.forEach(function (part, i) {
       sent.appendChild(document.createTextNode(part));
-      if (i < parts.length - 1) sent.appendChild(el('mark', null, q.x.f));
+      // Đúng: tô xanh từ trong câu; sai: tô đỏ (đáp án đúng vẫn được hiện ở các nút).
+      if (i < parts.length - 1) sent.appendChild(el('mark', o.ok ? 'good' : 'bad', q.x.f));
     });
     card.appendChild(sent);
     card.appendChild(el('div', 'ex-py', q.x.py));
@@ -176,7 +177,7 @@
     card.appendChild(el('div', 'meta', q.w.hanzi + ' · ' + q.w.pinyin + ' · ' + (c.vi || '') + (c.hv ? ' · ' + c.hv : '')));
 
     var last = quiz.i === quiz.qs.length - 1;
-    root.insertBefore(button(last ? 'Xem kết quả' : 'Câu tiếp', 'btn primary', function () {
+    root.insertBefore(button(last ? 'Xem kết quả' : 'Câu tiếp', 'btn primary next-btn', function () {
       quiz.i++;
       quiz.answered = false;
       if (quiz.i >= quiz.qs.length) renderResult(); else renderQuestion();

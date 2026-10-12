@@ -140,7 +140,13 @@ main, .topbar, .footer { max-width: 860px; margin: 0 auto; padding: 0 16px; }
 .examples summary { cursor: pointer; color: var(--muted); font-size: .85rem; }
 .ctx-card { cursor: default; }
 .ctx-sentence { font-size: 1.6rem; line-height: 1.6; font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif; }
-.ctx-sentence mark { background: var(--accent-soft); color: var(--accent); padding: 0 4px; border-radius: 4px; }
+.ctx-sentence mark { padding: 0 4px; border-radius: 4px; }
+.ctx-sentence mark.good { background: rgba(26, 127, 55, .18); color: #1a7f37; }
+.ctx-sentence mark.bad { background: var(--accent-soft); color: var(--accent); }
+:root[data-theme="dark"] .ctx-sentence mark.good { color: #4ade80; background: rgba(74, 222, 128, .15); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ctx-sentence mark.good { color: #4ade80; background: rgba(74, 222, 128, .15); } }
+.ctx-card .ex-py { color: var(--muted); }
+.next-btn { display: block; margin: 16px auto 0; min-width: 180px; }
 .options { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .opt { font-size: 1.3rem; font-family: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", sans-serif; }
 .btn:disabled.good { opacity: 1; background: #e6f4ea; color: #1a7f37; }
