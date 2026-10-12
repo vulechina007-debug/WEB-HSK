@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>小六 HSK</title>
-  <link rel="stylesheet" href="css/style.css?v=20261012f">
+  <link rel="stylesheet" href="css/style.css?v=20261012h">
 </head>
 <body>
   <header class="topbar">
@@ -56,20 +56,9 @@
       <h2 class="section-title">Sổ tay cá nhân</h2>
       <p id="notebook-msg" class="panel"></p>
       <div id="notebook-wrap" hidden>
-        <div id="nb-sub" class="chips" role="group" aria-label="Phần của sổ tay">
-          <button type="button" class="chip" data-sub="notes" aria-pressed="true">Ghi chú</button>
-          <button type="button" class="chip" data-sub="words" aria-pressed="false">Từ đã lưu</button>
-        </div>
-        <div id="nb-notes"></div>
-        <div id="nb-words" hidden>
-          <p id="notebook-empty" class="panel" hidden>Chưa có từ nào. Bấm “☆ Lưu vào sổ tay” ở một từ bất kỳ để thêm vào đây.</p>
-          <p id="notebook-summary" class="summary" aria-live="polite"></p>
-          <ul id="notebook-word-list" class="word-list"></ul>
-          <nav id="notebook-pager" class="pager" aria-label="Chuyển trang" hidden></nav>
-        </div>
+        <div id="nb-books"></div>
       </div>
     </section>
-
     <section id="view-flash" hidden aria-label="Flashcard"></section>
     <section id="view-context" hidden aria-label="Học theo ngữ cảnh"></section>
   </main>
@@ -80,27 +69,28 @@
     Chưa đăng nhập thì tiến độ chỉ lưu trên trình duyệt này; đăng nhập để lưu theo tài khoản.</p>
   </footer>
 
-  <script src="data/hsk1-6.js?v=20261012f"></script>
-  <script src="data/topics.js?v=20261012f"></script>
-  <script src="data/content/hsk1.js?v=20261012f"></script>
-  <script src="data/content/hsk2.js?v=20261012f"></script>
-  <script src="data/content/hsk3.js?v=20261012f"></script>
-  <script src="data/content/hsk4.js?v=20261012f"></script>
-  <script src="data/content/hsk5.js?v=20261012f"></script>
-  <script src="data/content/hsk6.js?v=20261012f"></script>
-  <script src="js/store.js?v=20261012f"></script>
-  <script src="js/topics.js?v=20261012f"></script>
-  <script src="js/firebase-config.js?v=20261012f"></script>
-  <script src="js/account.js?v=20261012f"></script>
-  <script src="js/authui.js?v=20261012f"></script>
-  <script src="js/speak.js?v=20261012f"></script>
-  <script src="js/pos.js?v=20261012f"></script>
-  <script src="js/wordlist.js?v=20261012f"></script>
-  <script src="js/app.js?v=20261012f"></script>
-  <script src="js/topicview.js?v=20261012f"></script>
-  <script src="js/notes.js?v=20261012f"></script>
-  <script src="js/notebook.js?v=20261012f"></script>
-  <script src="js/flashcard.js?v=20261012f"></script>
-  <script src="js/context.js?v=20261012f"></script>
+  <script src="data/hsk1-6.js?v=20261012h"></script>
+  <script src="data/topics.js?v=20261012h"></script>
+  <script src="data/content/hsk1.js?v=20261012h"></script>
+  <script src="data/content/hsk2.js?v=20261012h"></script>
+  <script src="data/content/hsk3.js?v=20261012h"></script>
+  <script src="data/content/hsk4.js?v=20261012h"></script>
+  <script src="data/content/hsk5.js?v=20261012h"></script>
+  <script src="data/content/hsk6.js?v=20261012h"></script>
+  <script src="js/store.js?v=20261012h"></script>
+  <script src="js/topics.js?v=20261012h"></script>
+  <script src="js/firebase-config.js?v=20261012h"></script>
+  <script src="js/account.js?v=20261012h"></script>
+  <script src="js/authui.js?v=20261012h"></script>
+  <script src="js/save.js?v=20261012h"></script>
+  <script src="js/speak.js?v=20261012h"></script>
+  <script src="js/pos.js?v=20261012h"></script>
+  <script src="js/wordlist.js?v=20261012h"></script>
+  <script src="js/app.js?v=20261012h"></script>
+  <script src="js/topicview.js?v=20261012h"></script>
+  <script src="js/books.js?v=20261012h"></script>
+  <script src="js/notebook.js?v=20261012h"></script>
+  <script src="js/flashcard.js?v=20261012h"></script>
+  <script src="js/context.js?v=20261012h"></script>
 </body>
 </html>

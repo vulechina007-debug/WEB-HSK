@@ -13,15 +13,6 @@
     return e;
   }
 
-  function speak(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'zh-CN';
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
-  }
-
   // opts: { list, summary, pager, onKnownChange(): gọi khi đổi trạng thái đã thuộc }
   function create(opts) {
     var results = [];
@@ -52,11 +43,52 @@
       title.appendChild(el('span', 'hanzi', slash(w.hanzi)));
       if (w.traditional && w.traditional !== w.hanzi) title.appendChild(el('span', 'trad', '【' + slash(w.traditional) + '】'));
       head.appendChild(title);
+
+      // Cụm nút ngay cạnh chữ Hán: Đã thuộc · Lưu vào sổ tay · Phát âm.
+      var tools = el('div', 'w-tools');
+      var known = store.isKnown(w.id);
+      var kb = el('button', 'pill pill-ghost', known ? '✓ Đã thuộc' : 'Đã thuộc');
+      kb.type = 'button';
+      kb.setAttribute('aria-pressed', known ? 'true' : 'false');
+      kb.addEventListener('click', function () {
+        store.markKnown(w.id, !store.isKnown(w.id));
+        if (opts.onKnownChange && opts.onKnownChange()) return; // danh sách được lọc lại
+        var now = store.isKnown(w.id);
+        kb.textContent = now ? '✓ Đã thuộc' : 'Đã thuộc';
+        kb.setAttribute('aria-pressed', now ? 'true' : 'false');
+      });
+      tools.appendChild(kb);
+
+      var acc = window.HSKAccount;
+      var nb = el('button', 'pill pill-ghost nb-btn');
+      nb.type = 'button';
+      if (opts.bookId) {
+        // Đang xem bên trong một sổ tay: nút để bỏ từ khỏi sổ tay này.
+        nb.textContent = '✕ Bỏ khỏi sổ';
+        nb.addEventListener('click', function () {
+          acc.removeWordFrom(opts.bookId, w.id);
+          if (opts.onBookChange) opts.onBookChange();
+        });
+      } else {
+        var paintNb = function () {
+          var n = acc.loggedIn() ? acc.booksOf(w.id).length : 0;
+          nb.textContent = n ? '★ Đã lưu' + (n > 1 ? ' (' + n + ')' : '') : '☆ Lưu';
+          nb.setAttribute('aria-pressed', n ? 'true' : 'false');
+        };
+        paintNb();
+        nb.addEventListener('click', function () {
+          if (!acc.loggedIn()) { window.HSKAuthUI.open(); return; }
+          window.HSKSave.open(w, paintNb);
+        });
+      }
+      tools.appendChild(nb);
+
       var btn = el('button', 'pill speak-pill', '🔊 Phát âm');
       btn.type = 'button';
       btn.setAttribute('aria-label', 'Phát âm ' + w.hanzi);
-      btn.addEventListener('click', function () { speak(String(w.hanzi).split('|')[0]); });
-      head.appendChild(btn);
+      btn.addEventListener('click', function () { window.HSKSpeak.say(String(w.hanzi).split('|')[0]); });
+      tools.appendChild(btn);
+      head.appendChild(tools);
       li.appendChild(head);
 
       // Pinyin và âm Hán-Việt.
@@ -79,40 +111,6 @@
 
       if (c.vi) li.appendChild(renderMeaning(c.vi));
 
-      var row = el('div', 'word-actions');
-      li.appendChild(row);
-      var known = store.isKnown(w.id);
-      var kb = el('button', 'known-btn', known ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc');
-      kb.type = 'button';
-      kb.setAttribute('aria-pressed', known ? 'true' : 'false');
-      kb.addEventListener('click', function () {
-        store.markKnown(w.id, !store.isKnown(w.id));
-        if (opts.onKnownChange && opts.onKnownChange()) return; // danh sách được lọc lại
-        var now = store.isKnown(w.id);
-        kb.textContent = now ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc';
-        kb.setAttribute('aria-pressed', now ? 'true' : 'false');
-      });
-      row.appendChild(kb);
-
-      // Sổ tay cá nhân: cần đăng nhập.
-      var acc = window.HSKAccount;
-      var nb = el('button', 'known-btn nb-btn');
-      function paintNb() {
-        var saved = acc.loggedIn() && acc.has(w.id);
-        nb.textContent = saved ? '★ Đã lưu vào sổ tay' : '☆ Lưu vào sổ tay';
-        nb.setAttribute('aria-pressed', saved ? 'true' : 'false');
-      }
-      paintNb();
-      nb.type = 'button';
-      nb.addEventListener('click', function () {
-        if (!acc.loggedIn()) { window.HSKAuthUI.open(); return; }
-        if (!acc.ready()) return;
-        if (acc.has(w.id)) acc.remove(w.id); else acc.add(w.id);
-        if (opts.onNotebookChange && opts.onNotebookChange()) return;
-        paintNb();
-      });
-      row.appendChild(nb);
-
       if (c.ex && c.ex.length) {
         var d = el('details', 'examples');
         d.appendChild(el('summary', null, 'Ví dụ (' + c.ex.length + ')'));
@@ -128,14 +126,14 @@
         });
         li.appendChild(d);
       }
-      if (opts.notes) {
+      if (opts.bookId) {
         var note = el('textarea', 'note-input');
         note.rows = 2;
         note.maxLength = 300;
         note.placeholder = 'Ghi chú của bạn về từ này…';
         note.setAttribute('aria-label', 'Ghi chú cho ' + w.hanzi);
-        note.value = window.HSKAccount.noteOf(w.id);
-        note.addEventListener('change', function () { window.HSKAccount.setNote(w.id, note.value); });
+        note.value = acc.wordNote(opts.bookId, w.id);
+        note.addEventListener('change', function () { acc.setWordNote(opts.bookId, w.id, note.value); });
         li.appendChild(note);
       }
       return li;
