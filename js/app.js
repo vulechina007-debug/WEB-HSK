@@ -1,27 +1,32 @@
 (function () {
   'use strict';
 
-  var PAGE_SIZE = 100;
   var words = window.HSK_WORDS || [];
   // Nội dung do AI tạo (nghĩa Việt, Hán-Việt, ví dụ, chủ đề) được nạp ở việc 3, theo id từ.
   var content = window.HSK_CONTENT || {};
 
   var store = window.HSKStore;
-  var state = { query: '', level: 'all', known: 'all', topic: '', shown: PAGE_SIZE, results: [] };
+  var state = { query: '', level: 'all', known: 'all' };
 
   var els = {
-    topicFilter: document.getElementById('topic-filter'),
     knownFilter: document.getElementById('known-filter'),
     tabs: document.getElementById('tabs'),
-    viewBrowse: document.getElementById('view-browse'),
-    viewFlash: document.getElementById('view-flash'),
     search: document.getElementById('search'),
     levels: document.getElementById('level-filter'),
-    summary: document.getElementById('summary'),
-    list: document.getElementById('word-list'),
-    more: document.getElementById('load-more'),
     theme: document.getElementById('theme-toggle')
   };
+
+  var list = window.HSKList.create({
+    list: document.getElementById('word-list'),
+    summary: document.getElementById('summary'),
+    pager: document.getElementById('pager'),
+    // Khi đang lọc theo trạng thái, đổi trạng thái làm từ biến khỏi danh sách: lọc lại, giữ trang.
+    onKnownChange: function () {
+      if (state.known === 'all') return false;
+      applyFilters(true);
+      return true;
+    }
+  });
 
   function strip(s) {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
@@ -32,17 +37,14 @@
     w._search = [w.hanzi, w.traditional, strip(w.pinyin), c.vi ? strip(c.vi) : '', c.hv ? strip(c.hv) : ''].join(' ');
   });
 
-  function applyFilters() {
+  function applyFilters(keepPage) {
     var q = strip(state.query.trim());
-    state.results = words.filter(function (w) {
+    list.set(words.filter(function (w) {
       if (state.level !== 'all' && String(w.level) !== state.level) return false;
-      if (state.topic && ((content[w.id] || {}).t || []).indexOf(state.topic) === -1) return false;
       if (state.known === 'known' && !store.isKnown(w.id)) return false;
       if (state.known === 'unknown' && store.isKnown(w.id)) return false;
       return !q || w._search.indexOf(q) !== -1;
-    });
-    state.shown = PAGE_SIZE;
-    render();
+    }), keepPage === true);
   }
 
   function el(tag, cls, text) {
@@ -50,72 +52,6 @@
     if (cls) e.className = cls;
     if (text) e.textContent = text;
     return e;
-  }
-
-  function renderWord(w) {
-    var c = content[w.id] || {};
-    var li = el('li', 'word');
-
-    li.appendChild(el('span', 'hanzi', w.hanzi));
-
-    var mid = el('div');
-    mid.appendChild(el('div', 'pinyin', w.pinyin));
-    mid.appendChild(el('div', 'meta', 'HSK ' + w.level + (w.pos ? ' · ' + w.pos : '') + (c.hv ? ' · ' + c.hv : '')));
-    li.appendChild(mid);
-
-    var btn = el('button', 'speak', '🔊');
-    btn.type = 'button';
-    btn.setAttribute('aria-label', 'Phát âm ' + w.hanzi);
-    btn.addEventListener('click', function () { speak(w.hanzi); });
-    li.appendChild(btn);
-
-    var known = store.isKnown(w.id);
-    var kb = el('button', 'known-btn', known ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc');
-    kb.type = 'button';
-    kb.setAttribute('aria-pressed', known ? 'true' : 'false');
-    kb.addEventListener('click', function () {
-      store.markKnown(w.id, !store.isKnown(w.id));
-      if (state.known === 'all') {
-        var now = store.isKnown(w.id);
-        kb.textContent = now ? '✓ Đã thuộc' : 'Đánh dấu đã thuộc';
-        kb.setAttribute('aria-pressed', now ? 'true' : 'false');
-      } else {
-        var keep = state.shown;
-        applyFilters();
-        state.shown = keep;
-        render();
-      }
-    });
-    li.appendChild(kb);
-
-    if (c.vi) {
-      var vi = el('div', 'vi', c.vi);
-      vi.appendChild(el('span', 'badge', 'AI tạo'));
-      li.appendChild(vi);
-    }
-    if (c.ex && c.ex.length) {
-      var d = el('details', 'examples');
-      d.appendChild(el('summary', null, 'Ví dụ (' + c.ex.length + ')'));
-      c.ex.forEach(function (x) {
-        var b = el('div', 'fc-ex');
-        b.appendChild(el('div', 'ex-zh', x.zh));
-        b.appendChild(el('div', 'ex-py', x.py));
-        b.appendChild(el('div', 'ex-vi', x.vi));
-        d.appendChild(b);
-      });
-      li.appendChild(d);
-    }
-    return li;
-  }
-
-  function render() {
-    els.list.textContent = '';
-    var frag = document.createDocumentFragment();
-    state.results.slice(0, state.shown).forEach(function (w) { frag.appendChild(renderWord(w)); });
-    els.list.appendChild(frag);
-
-    els.summary.textContent = 'Hiển thị ' + Math.min(state.shown, state.results.length) + ' / ' + state.results.length + ' từ';
-    els.more.hidden = state.shown >= state.results.length;
   }
 
   function buildLevelChips() {
@@ -153,33 +89,26 @@
     });
   }
 
-  function initTabs() {
-    Array.prototype.forEach.call(els.tabs.children, function (t) {
-      t.addEventListener('click', function () {
-        var v = t.dataset.view;
-        Array.prototype.forEach.call(els.tabs.children, function (x) {
-          x.setAttribute('aria-pressed', x === t ? 'true' : 'false');
-        });
-        els.viewBrowse.hidden = v !== 'browse';
-        els.viewFlash.hidden = v !== 'flash';
-        document.getElementById('view-context').hidden = v !== 'context';
-        document.getElementById('view-backup').hidden = v !== 'backup';
-        window.HSKBackup.updateBanner();
-        if (v === 'flash') window.HSKFlash.show();
-        else if (v === 'context') window.HSKContext.show();
-        else if (v === 'backup') window.HSKBackup.show();
-        else applyFilters();
-      });
+  // Các tab: id = data-view, section tương ứng là #view-<id>.
+  var VIEWS = ['browse', 'topics', 'flash', 'context', 'backup'];
+
+  function showView(v) {
+    Array.prototype.forEach.call(els.tabs.children, function (x) {
+      x.setAttribute('aria-pressed', x.dataset.view === v ? 'true' : 'false');
     });
+    VIEWS.forEach(function (id) { document.getElementById('view-' + id).hidden = id !== v; });
+    window.HSKBackup.updateBanner();
+    if (v === 'flash') window.HSKFlash.show();
+    else if (v === 'context') window.HSKContext.show();
+    else if (v === 'backup') window.HSKBackup.show();
+    else if (v === 'topics') window.HSKTopicView.show();
+    else applyFilters();
   }
 
-  function speak(text) {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = 'zh-CN';
-    u.rate = 0.9;
-    window.speechSynthesis.speak(u);
+  function initTabs() {
+    Array.prototype.forEach.call(els.tabs.children, function (t) {
+      t.addEventListener('click', function () { showView(t.dataset.view); });
+    });
   }
 
   function initTheme() {
@@ -196,13 +125,12 @@
   }
 
   els.search.addEventListener('input', function () { state.query = els.search.value; applyFilters(); });
-  els.more.addEventListener('click', function () { state.shown += PAGE_SIZE; render(); });
+
+  window.HSKApp = { showView: showView };
 
   initTheme();
   buildLevelChips();
   buildKnownChips();
-  window.HSKTopics.fill(els.topicFilter, '');
-  els.topicFilter.addEventListener('change', function () { state.topic = els.topicFilter.value; applyFilters(); });
   initTabs();
   applyFilters();
 })();
